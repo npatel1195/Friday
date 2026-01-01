@@ -5,6 +5,7 @@
 #include <QTextToSpeech>
 #include <QMouseEvent>
 #include <QDateTime>
+#include <QContextMenuEvent>
 #include "VoiceEar.h"
 #include "GeminiBrain.h"
 
@@ -14,8 +15,10 @@ public:
     explicit Friday(QWidget *parent = nullptr);
 
 protected:
+    // --- EVENTS ---
     void mousePressEvent(QMouseEvent *event) override;
     void mouseMoveEvent(QMouseEvent *event) override;
+    void contextMenuEvent(QContextMenuEvent *event) override;
 
 private:
     void setupUI();
@@ -27,7 +30,4 @@ private:
 
     QPoint dragPosition;
     qint64 lastRequestTime = 0;
-
-    // --- NEW STATE VARIABLE ---
-    bool isSleeping = false;
 };

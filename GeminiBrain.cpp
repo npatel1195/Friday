@@ -7,13 +7,23 @@ GeminiBrain::GeminiBrain(QObject *parent) : QObject(parent) {
 }
 
 const QString API_KEY;
+void GeminiBrain::setApiKey(const QString &key) {
+    m_apiKey = key;
+    qDebug() << "🔑 API Key set successfully.";
+}
+
 
 void GeminiBrain::sendMessage(const QString &text) {
     qDebug() << "🧠 Sending to AI:" << text;
 
+    if (m_apiKey.isEmpty()) {
+        emit responseReceived("I am missing my API Key, sir.");
+        return;
+    }
+
     QNetworkRequest req(QUrl("https://api.openai.com/v1/chat/completions"));
     req.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
-    req.setRawHeader("Authorization", ("Bearer " + API_KEY).toUtf8());
+    req.setRawHeader("Authorization", ("Bearer " + m_apiKey).toUtf8());
 
     // 1. UPDATE SYSTEM PROMPT
     QJsonObject systemMsg;

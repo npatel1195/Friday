@@ -10,6 +10,7 @@ class GeminiBrain : public QObject {
     Q_OBJECT
 public:
     explicit GeminiBrain(QObject *parent = nullptr);
+    void setApiKey(const QString &key);
     void sendMessage(const QString &text);
 signals:
     void responseReceived(const QString &text);
@@ -17,5 +18,6 @@ signals:
 private:
     QNetworkAccessManager *manager;
     QJsonArray history;
+    QString m_apiKey;
     void handleReply(QNetworkReply *reply);
 };

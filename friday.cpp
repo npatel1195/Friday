@@ -5,12 +5,57 @@
 #include <QCoreApplication>
 #include <QFile>
 #include <QDirIterator>
+#include <QSettings>
+#include <QInputDialog>
+#include <QProcessEnvironment>
 
 Friday::Friday(QWidget *parent) : QMainWindow(parent) {
     setupUI();
     voice = new QTextToSpeech(this);
     brain = new GeminiBrain(this);
     ear = new VoiceEar(this);
+
+    QString finalKey = "";
+
+    // 1. Check System Environment Variable (Good for Developers)
+    // You set this in Windows Settings -> Env Vars -> "OPENAI_API_KEY"
+    finalKey = qEnvironmentVariable("OPENAI_API_KEY");
+
+    if (!finalKey.isEmpty()) {
+        qDebug() << "🔑 Found API Key in Environment Variables.";
+    }
+    // 1.5 Check for local secrets.txt file (Deployment Override)
+    if (finalKey.isEmpty()) {
+        QFile file(QCoreApplication::applicationDirPath() + "/secrets.txt");
+        if (file.open(QIODevice::ReadOnly)) {
+            finalKey = QString::fromUtf8(file.readAll()).trimmed();
+            qDebug() << "🔑 Found API Key in secrets.txt";
+        }
+    }
+    else {
+        // 2. Check Saved Settings (Good for Users)
+        QSettings settings("FridayCorp", "FridayAssistant");
+        finalKey = settings.value("openai_key").toString();
+
+        // 3. If still empty, Ask the User (First Run)
+        if (finalKey.isEmpty()) {
+            bool ok;
+            QString text = QInputDialog::getText(this, "Friday Setup",
+                                                 "Enter OpenAI API Key (sk-...):",
+                                                 QLineEdit::Normal, "", &ok);
+            if (ok && !text.isEmpty()) {
+                finalKey = text.trimmed();
+                settings.setValue("openai_key", finalKey); // Save for next time
+            }
+        }
+    }
+
+    // 4. Send Key to Brain
+    if (finalKey.isEmpty()) {
+        voice->say("I cannot function without a key.");
+    } else {
+        brain->setApiKey(finalKey);
+    }
 
     // 1. PREVENT ECHO
     connect(voice, &QTextToSpeech::stateChanged, this, [this](QTextToSpeech::State state){

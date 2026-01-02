@@ -25,7 +25,7 @@ void GeminiBrain::sendMessage(const QString &text) {
     req.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
     req.setRawHeader("Authorization", ("Bearer " + m_apiKey).toUtf8());
 
-    // 1. UPDATE SYSTEM PROMPT
+    // 1. SYSTEM PROMPT
     QJsonObject systemMsg;
     systemMsg["role"] = "system";
     systemMsg["content"] = "You are Friday. "

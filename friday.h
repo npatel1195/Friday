@@ -30,4 +30,5 @@ private:
 
     QPoint dragPosition;
     qint64 lastRequestTime = 0;
+    bool isSleeping = false;
 };

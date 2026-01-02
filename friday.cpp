@@ -68,6 +68,10 @@ Friday::Friday(QWidget *parent) : QMainWindow(parent) {
 
     // 2. VISUALS
     connect(ear, &VoiceEar::listeningStateChanged, this, [this](bool rec){
+        if (isSleeping) {
+            reactorLabel->setStyleSheet("border: 4px solid #555555; border-radius: 125px;");
+            return;
+        }
         if(rec) {
             reactorLabel->setStyleSheet("border: 4px solid #00FFFF; border-radius: 125px;");
             animation->setSpeed(200);
@@ -80,15 +84,50 @@ Friday::Friday(QWidget *parent) : QMainWindow(parent) {
     // 3. HEARD COMMAND
     connect(ear, &VoiceEar::heardCommand, this, [this](const QString &text){
         QString clean = text.trimmed();
+        QString lower = clean.toLower();
+
         if (clean.length() < 2) return;
         if (clean.contains("[silence]")) return;
+        if (lower == "you" || lower == "thank you") return;
+
+        qDebug() << "🎤 HEARD:" << clean;
+        // 1: WAKE UP ---
+            if (lower.contains("wake up") || lower.contains("friday") || lower.contains("online")) {
+            if (isSleeping) {
+                isSleeping = false;
+                voice->say("Systems restored. I am listening.");
+                reactorLabel->setStyleSheet("border: 4px solid #00FFFF; border-radius: 125px;");
+                return;
+            }
+        }
+
+        // 2: SHUT DOWN ---
+        if (lower.contains("shut down") || lower.contains("power down") || lower.contains("goodbye")) {
+            voice->say("Goodbye, sir.");
+            reactorLabel->setStyleSheet("border: 4px solid #000000; border-radius: 125px;");
+            QTimer::singleShot(2000, qApp, &QCoreApplication::quit);
+            return;
+        }
+
+        // IGNORE IF SLEEPING ---
+        if (isSleeping) {
+            qDebug() << "💤 Sleeping... Ignoring:" << clean;
+            return;
+        }
+
+        //  3: GO TO SLEEP ---
+        if (lower.contains("go to sleep") || lower.contains("stand by") || lower.contains("standby")) {
+            isSleeping = true;
+            voice->say("Entering standby mode.");
+            reactorLabel->setStyleSheet("border: 4px solid #555555; border-radius: 125px;"); // Grey
+            return;
+        }
 
         // Rate Limit
         qint64 now = QDateTime::currentMSecsSinceEpoch();
         if (now - lastRequestTime < 2000) return;
         lastRequestTime = now;
 
-        qDebug() << "🎤 HEARD:" << clean;
         reactorLabel->setStyleSheet("border: 4px solid #FFA500; border-radius: 125px;");
         brain->sendMessage(clean);
     });
